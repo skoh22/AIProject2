@@ -39,7 +39,7 @@ class ReflexAgent(Agent):
         some Directions.X for some X in the set {North, South, West, East, Stop}
         """
         # Collect legal moves and successor states
-        #legalMoves = gameState.getLegalActions()
+        legalMoves = gameState.getLegalActions()
 
         # Choose one of the best actions
         scores = [self.evaluationFunction(gameState, action) for action in legalMoves]
