@@ -69,28 +69,49 @@ class ReflexAgent(Agent):
         # Useful information you can extract from a GameState (pacman.py)
         successorGameState = currentGameState.generatePacmanSuccessor(action)
         newPos = successorGameState.getPacmanPosition()
+        cur_pos = currentGameState.getPacmanPosition()
         newFood = successorGameState.getFood()
-        #newGhostStates = successorGameState.getGhostStates()
+        newGhostStates = successorGameState.getGhostStates()
         current_ghost_states = currentGameState.getGhostStates()
         current_scared_times = [ghostState.scaredTimer for ghostState in current_ghost_states]
-        #newScaredTimes = [ghostState.scaredTimer for ghostState in newGhostStates]
+        print 'SCARED: ', current_scared_times
+        newScaredTimes = [ghostState.scaredTimer for ghostState in newGhostStates]
+        score = successorGameState.getScore()
+        min_ghost_dist = min([util.manhattanDistance(newPos, g) for g in successorGameState.getGhostPositions()])
 
         score = successorGameState.getScore()
+        min_ghost_dist = min([util.manhattanDistance(newPos, g) for g in currentGameState.getGhostPositions()])
 
-        if min([util.manhattanDistance(newPos, g) for g in currentGameState.getGhostPositions()]) < 15:
-            ghost_vars = zip(currentGameState.getGhostPositions(), current_scared_times)
-            ghost_proximity_scale = 1
-            ghost_factors = [(util.manhattanDistance(newPos, g[0]) * (ghost_proximity_scale * (-1 if g[1] > 0 else 1))) for g in ghost_vars]
-            score += sum(ghost_factors)
+        '''if  min_ghost_dist > 10:
+            ghost_proximity_scales = (10, -10)  # (unscared, scared)
+        elif min_ghost_dist > 5:
+            ghost_proximity_scales = (5, -50)   # (unscared, scared)
+        else:
+            ghost_proximity_scales = (1, -100)    # (unscared, scared)
+        ghost_vars = zip(currentGameState.getGhostPositions(), current_scared_times)
+        ghost_factors = [(util.manhattanDistance(newPos, g[0]) * (ghost_proximity_scales[1] if g[1] > 0 else ghost_proximity_scales[0])) for g in ghost_vars]
+        score += sum(ghost_factors)'''
+        #if min([util.manhattanDistance(newPos, g) for g in currentGameState.getGhostPositions()]) < 10:
+        ghost_vars = zip(currentGameState.getGhostPositions(), current_scared_times)
+        ghost_proximity_scale = 2
+        ghost_factors = [(util.manhattanDistance(newPos, g[0]) * (ghost_proximity_scale * (-1 if g[1] > 0 else 1)))
+                         for g in ghost_vars]
+        score += sum(ghost_factors)
 
         if newPos == currentGameState.getPacmanPosition():
             score -= 10
 
-        food_dist = [util.manhattanDistance(newPos, f)for f in newFood.asList()]
-        if len(food_dist) == 0:  # catch case at end of game where no food left
-            food_dist = [0]
-        near_food = min(food_dist)
-        score += 20/(max(1, near_food))  # +20 if eating food, less for farther from food
+        if newFood[newPos[0]][newPos[1]]:
+            score += 20
+        else:
+            new_food_dists = [util.manhattanDistance(newPos, f) for f in newFood.asList()]
+            if len(new_food_dists) == 0:
+                new_food_dists = [0]
+            current_food_dists = [util.manhattanDistance(cur_pos, f) for f in newFood.asList()]
+            if len(current_food_dists) == 0:
+                current_food_dists = [0]
+
+            score += random.randint(1, 15) * (min(current_food_dists) - min(new_food_dists))
 
         return score
 
