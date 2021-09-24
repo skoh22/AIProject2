@@ -133,8 +133,55 @@ class MinimaxAgent(MultiAgentSearchAgent):
           gameState.getNumAgents():
             Returns the total number of agents in the game
         """
-        "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        actions = gameState.getLegalActions(0) #pacman actions
+        for i in range(len(actions)):
+            action = actions[i]
+            val = self.Minimax(gameState.generateSuccessor(0, action),0,1)
+            if i is 0:
+                bestAction = actions[0]
+                bestVal = val
+            if val>bestVal:
+                bestVal = val
+                bestAction = action
+        return bestAction
+    def Minimax(self, gameState, currentDepth, currentAgent):
+        if currentDepth >= self.depth or gameState.isWin() or gameState.isLose():
+            return self.evaluationFunction
+        if currentAgent is 0: #pacman's turn
+            nextActions = gameState.getLegalActions(currentAgent)
+            values = []
+            argMax=0
+            for i in range(len(nextActions)):
+                nextAction = nextActions[i]
+                values.append(self.Minimax(gameState.generateSuccessor(currentAgent, nextAction),currentDepth, currentAgent+1))
+                if i is 0:
+                    valMax = values[0]
+                if values[i]>valMax:
+                    argMax = i
+                    valMax = values[i]
+            return valMax
+        if currentAgent > 0:
+            nextActions = gameState.getLegalActions(currentAgent)
+            values = []
+            argMin = 0
+            #updating and tracking currentAgent
+            if currentAgent >= gameState.getNumAgents()-1: #on the last ghost
+                nextAgent = 0
+                nextDepth = currentDepth + 1
+            else:
+                nextAgent = currentAgent + 1
+                nextDepth = currentDepth
+            for i in range(len(nextActions)):
+                nextAction = nextActions[i]
+                values.append(self.Minimax(gameState.generateSuccessor(currentAgent, nextAction),nextDepth, nextAgent))
+                if i is 0:
+                    valMin = values[0]
+                if values[i]<valMin:
+                    argMin = i
+                    valMin = values[i]
+            return valMin
+
+
 
 class AlphaBetaAgent(MultiAgentSearchAgent):
     """
