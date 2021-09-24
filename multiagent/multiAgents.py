@@ -10,7 +10,7 @@
 # (denero@cs.berkeley.edu) and Dan Klein (klein@cs.berkeley.edu).
 # Student side autograding was added by Brad Miller, Nick Hay, and
 # Pieter Abbeel (pabbeel@cs.berkeley.edu).
-
+import math
 
 from util import manhattanDistance
 from game import Directions
@@ -70,16 +70,30 @@ class ReflexAgent(Agent):
         successorGameState = currentGameState.generatePacmanSuccessor(action)
         newPos = successorGameState.getPacmanPosition()
         newFood = successorGameState.getFood()
-        newGhostStates = successorGameState.getGhostStates()
-        newScaredTimes = [ghostState.scaredTimer for ghostState in newGhostStates]
-        #print "newPos: " + str(newPos)
-        #print "newFood: " + str(newFood)
-        for gState in newGhostStates:
-                print "gState: " + str(gState)
-        print "newScaredTimes: " + str(newScaredTimes)
+        #newGhostStates = successorGameState.getGhostStates()
+        current_ghost_states = currentGameState.getGhostStates()
+        current_scared_times = [ghostState.scaredTimer for ghostState in current_ghost_states]
+        #newScaredTimes = [ghostState.scaredTimer for ghostState in newGhostStates]
 
-        "*** YOUR CODE HERE ***"
-        return successorGameState.getScore()
+        score = successorGameState.getScore()
+
+        if min([util.manhattanDistance(newPos, g) for g in currentGameState.getGhostPositions()]) < 15:
+            ghost_vars = zip(currentGameState.getGhostPositions(), current_scared_times)
+            ghost_proximity_scale = 1
+            ghost_factors = [(util.manhattanDistance(newPos, g[0]) * (ghost_proximity_scale * (-1 if g[1] > 0 else 1))) for g in ghost_vars]
+            score += sum(ghost_factors)
+
+        if newPos == currentGameState.getPacmanPosition():
+            score -= 10
+
+        food_dist = [util.manhattanDistance(newPos, f)for f in newFood.asList()]
+        if len(food_dist) == 0:  # catch case at end of game where no food left
+            food_dist = [0]
+        near_food = min(food_dist)
+        score += 20/(max(1, near_food))  # +20 if eating food, less for farther from food
+
+        return score
+
 
 def scoreEvaluationFunction(currentGameState):
     """
