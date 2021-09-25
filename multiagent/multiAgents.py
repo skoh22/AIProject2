@@ -140,20 +140,30 @@ class MinimaxAgent(MultiAgentSearchAgent):
             if i is 0:
                 bestAction = actions[0]
                 bestVal = val
+                #print "bestVal = " + str(bestVal)
+                #print "bestAction = " + str(i)
             if val>bestVal:
                 bestVal = val
                 bestAction = action
+                #print "bestVal = " + str(bestVal)
+                #print "bestAction = " + str(i)
         return bestAction
     def Minimax(self, gameState, currentDepth, currentAgent):
         if currentDepth >= self.depth or gameState.isWin() or gameState.isLose():
-            return self.evaluationFunction
+            return self.evaluationFunction(gameState)
         if currentAgent is 0: #pacman's turn
             nextActions = gameState.getLegalActions(currentAgent)
             values = []
             argMax=0
+            if currentAgent >= gameState.getNumAgents()-1: #on the last ghost
+                nextAgent = 0
+                nextDepth = currentDepth + 1
+            else:
+                nextAgent = currentAgent + 1
+                nextDepth = currentDepth
             for i in range(len(nextActions)):
                 nextAction = nextActions[i]
-                values.append(self.Minimax(gameState.generateSuccessor(currentAgent, nextAction),currentDepth, currentAgent+1))
+                values.append(self.Minimax(gameState.generateSuccessor(currentAgent, nextAction),nextDepth, nextAgent))
                 if i is 0:
                     valMax = values[0]
                 if values[i]>valMax:
@@ -192,8 +202,72 @@ class AlphaBetaAgent(MultiAgentSearchAgent):
         """
           Returns the minimax action using self.depth and self.evaluationFunction
         """
-        "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        actions = gameState.getLegalActions(0) #pacman actions
+        for i in range(len(actions)):
+            action = actions[i]
+            val = self.Minimax(gameState.generateSuccessor(0, action),0,1)
+            if i is 0:
+                bestAction = actions[0]
+                bestVal = val
+                #print "bestVal = " + str(bestVal)
+                #print "bestAction = " + str(i)
+            if val>bestVal:
+                bestVal = val
+                bestAction = action
+                #print "bestVal = " + str(bestVal)
+                #print "bestAction = " + str(i)
+        return bestAction
+
+    def MaxValue(self, gameState, alpha, beta, currentDepth, currentAgent):
+        if currentDepth >= self.depth or gameState.isWin() or gameState.isLose():
+            return self.evaluationFunction(gameState)
+        v = -99999
+        nextActions = gameState.getLegalActions(currentAgent)
+        values = []
+        if currentAgent >= gameState.getNumAgents() - 1:  # on the last ghost
+            nextAgent = 0
+            nextDepth = currentDepth + 1
+        else:
+            nextAgent = currentAgent + 1
+            nextDepth = currentDepth
+        for i in range(len(nextActions)):
+            nextAction = nextActions[i]
+            values.append(self.MinValue(gameState.generateSuccessor(currentAgent, nextAction), alpha, beta, nextDepth, nextAgent))
+            if i is 0:
+                valMax = values[0]
+            if values[i] > valMax:
+                argMax = i
+                valMax = values[i]
+            if v >= beta:
+                return v
+            if v>=alpha:
+                alpha = v
+        return v
+    def MinValue(self, gameState, alpha, beta, currentDepth, currentAgent):
+        if currentDepth >= self.depth or gameState.isWin() or gameState.isLose():
+            return self.evaluationFunction(gameState)
+        v = 99999
+        nextActions = gameState.getLegalActions(currentAgent)
+        values = []
+        if currentAgent >= gameState.getNumAgents() - 1:  # on the last ghost
+            nextAgent = 0
+            nextDepth = currentDepth + 1
+        else:
+            nextAgent = currentAgent + 1
+            nextDepth = currentDepth
+        for i in range(len(nextActions)):
+            nextAction = nextActions[i]
+            values.append(self.MaxValue(gameState.generateSuccessor(currentAgent, nextAction), alpha, beta, nextDepth, nextAgent))
+            if i is 0:
+                valMax = values[0]
+            if values[i] > valMax:
+                argMax = i
+                valMax = values[i]
+            if v <= alpha:
+                return v
+            if v<=beta:
+                beta = v
+        return v
 
 class ExpectimaxAgent(MultiAgentSearchAgent):
     """
