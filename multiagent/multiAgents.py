@@ -22,7 +22,6 @@ class ReflexAgent(Agent):
     """
       A reflex agent chooses an action at each choice point by examining
       its alternatives via a state evaluation function.
-
       The code below is provided as a guide.  You are welcome to change
       it in any way you see fit, so long as you don't touch our method
       headers.
@@ -32,9 +31,7 @@ class ReflexAgent(Agent):
     def getAction(self, gameState):
         """
         You do not need to change this method, but you're welcome to.
-
         getAction chooses among the best options according to the evaluation function.
-
         Just like in the previous project, getAction takes a GameState and returns
         some Directions.X for some X in the set {North, South, West, East, Stop}
         """
@@ -54,15 +51,12 @@ class ReflexAgent(Agent):
     def evaluationFunction(self, currentGameState, action):
         """
         Design a better evaluation function here.
-
         The evaluation function takes in the current and proposed successor
         GameStates (pacman.py) and returns a number, where higher numbers are better.
-
         The code below extracts some useful information from the state, like the
         remaining food (newFood) and Pacman position after moving (newPos).
         newScaredTimes holds the number of moves that each ghost will remain
         scared because of Pacman having eaten a power pellet.
-
         Print out these variables to see what you're getting, then combine them
         to create a masterful evaluation function.
         """
@@ -118,7 +112,6 @@ def scoreEvaluationFunction(currentGameState):
     """
       This default evaluation function just returns the score of the state.
       The score is the same one displayed in the Pacman GUI.
-
       This evaluation function is meant for use with adversarial search agents
       (not reflex agents).
     """
@@ -166,8 +159,65 @@ class MinimaxAgent(MultiAgentSearchAgent):
           gameState.getNumAgents():
             Returns the total number of agents in the game
         """
-        "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        actions = gameState.getLegalActions(0) #pacman actions
+        for i in range(len(actions)):
+            action = actions[i]
+            val = self.Minimax(gameState.generateSuccessor(0, action),0,1)
+            if i is 0:
+                bestAction = actions[0]
+                bestVal = val
+                #print "bestVal = " + str(bestVal)
+                #print "bestAction = " + str(i)
+            if val>bestVal:
+                bestVal = val
+                bestAction = action
+                #print "bestVal = " + str(bestVal)
+                #print "bestAction = " + str(i)
+        return bestAction
+    def Minimax(self, gameState, currentDepth, currentAgent):
+        if currentDepth >= self.depth or gameState.isWin() or gameState.isLose():
+            return self.evaluationFunction(gameState)
+        if currentAgent is 0: #pacman's turn
+            nextActions = gameState.getLegalActions(currentAgent)
+            values = []
+            argMax=0
+            if currentAgent >= gameState.getNumAgents()-1: #on the last ghost
+                nextAgent = 0
+                nextDepth = currentDepth + 1
+            else:
+                nextAgent = currentAgent + 1
+                nextDepth = currentDepth
+            for i in range(len(nextActions)):
+                nextAction = nextActions[i]
+                values.append(self.Minimax(gameState.generateSuccessor(currentAgent, nextAction),nextDepth, nextAgent))
+                if i is 0:
+                    valMax = values[0]
+                if values[i]>valMax:
+                    argMax = i
+                    valMax = values[i]
+            return valMax
+        if currentAgent > 0:
+            nextActions = gameState.getLegalActions(currentAgent)
+            values = []
+            argMin = 0
+            #updating and tracking currentAgent
+            if currentAgent >= gameState.getNumAgents()-1: #on the last ghost
+                nextAgent = 0
+                nextDepth = currentDepth + 1
+            else:
+                nextAgent = currentAgent + 1
+                nextDepth = currentDepth
+            for i in range(len(nextActions)):
+                nextAction = nextActions[i]
+                values.append(self.Minimax(gameState.generateSuccessor(currentAgent, nextAction),nextDepth, nextAgent))
+                if i is 0:
+                    valMin = values[0]
+                if values[i]<valMin:
+                    argMin = i
+                    valMin = values[i]
+            return valMin
+
+
 
 class AlphaBetaAgent(MultiAgentSearchAgent):
     """
@@ -178,8 +228,58 @@ class AlphaBetaAgent(MultiAgentSearchAgent):
         """
           Returns the minimax action using self.depth and self.evaluationFunction
         """
-        "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        return self.AlphaBetaSearch(gameState)
+    def AlphaBetaSearch(self, gameState):
+        nextActions=gameState.getLegalActions(0)
+        v, actionIndex = self.MaxValue(gameState,-999999,999999,0,0)
+        return nextActions[actionIndex]
+    def MaxValue(self, gameState, alpha, beta, currentDepth, currentAgent):
+        if currentDepth>=self.depth or gameState.isWin() or gameState.isLose():
+            return self.evaluationFunction(gameState)
+        v = -999999
+        nextActions = gameState.getLegalActions(currentAgent)
+        if currentAgent >= gameState.getNumAgents() - 1:  # on the last ghost
+            nextAgent = 0
+            nextDepth = currentDepth
+        else:
+            nextAgent = currentAgent + 1
+            nextDepth = currentDepth
+        for i in range(len(nextActions)):
+            nextAction = nextActions[i]
+            possibleV = self.MinValue(gameState.generateSuccessor(currentAgent,nextAction), alpha, beta, nextDepth, nextAgent)
+            if possibleV > v:
+                v = possibleV
+                actionIndex = i
+            if v > beta:
+                if currentDepth is 0:
+                    return v, actionIndex
+                return v
+            alpha = max(alpha, v)
+        if currentDepth is 0:
+            return v, actionIndex
+        return v
+    def MinValue(self, gameState, alpha, beta, currentDepth, currentAgent):
+        if currentDepth >= self.depth or gameState.isWin() or gameState.isLose():
+            return self.evaluationFunction(gameState)
+        v = 999999
+        nextActions = gameState.getLegalActions(currentAgent)
+        if currentAgent >= gameState.getNumAgents() - 1:  # on the last ghost
+            nextAgent = 0
+            nextDepth = currentDepth + 1
+        else:
+            nextAgent = currentAgent + 1
+            nextDepth = currentDepth
+        for i in range(len(nextActions)):
+            nextAction = nextActions[i]
+            if currentAgent >= gameState.getNumAgents() - 1:  # on the last ghost
+                v = min(v, self.MaxValue(gameState.generateSuccessor(currentAgent, nextAction), alpha, beta, nextDepth, nextAgent))
+            else:
+                v = min(v, self.MinValue(gameState.generateSuccessor(currentAgent, nextAction), alpha, beta, nextDepth,
+                                         nextAgent))
+            if v < alpha:
+                return v
+            beta = min(beta,v)
+        return v
 
 class ExpectimaxAgent(MultiAgentSearchAgent):
     """
