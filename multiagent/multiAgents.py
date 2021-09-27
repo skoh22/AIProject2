@@ -22,7 +22,6 @@ class ReflexAgent(Agent):
     """
       A reflex agent chooses an action at each choice point by examining
       its alternatives via a state evaluation function.
-
       The code below is provided as a guide.  You are welcome to change
       it in any way you see fit, so long as you don't touch our method
       headers.
@@ -32,9 +31,7 @@ class ReflexAgent(Agent):
     def getAction(self, gameState):
         """
         You do not need to change this method, but you're welcome to.
-
         getAction chooses among the best options according to the evaluation function.
-
         Just like in the previous project, getAction takes a GameState and returns
         some Directions.X for some X in the set {North, South, West, East, Stop}
         """
@@ -54,15 +51,12 @@ class ReflexAgent(Agent):
     def evaluationFunction(self, currentGameState, action):
         """
         Design a better evaluation function here.
-
         The evaluation function takes in the current and proposed successor
         GameStates (pacman.py) and returns a number, where higher numbers are better.
-
         The code below extracts some useful information from the state, like the
         remaining food (newFood) and Pacman position after moving (newPos).
         newScaredTimes holds the number of moves that each ghost will remain
         scared because of Pacman having eaten a power pellet.
-
         Print out these variables to see what you're getting, then combine them
         to create a masterful evaluation function.
         """
@@ -71,55 +65,53 @@ class ReflexAgent(Agent):
         newPos = successorGameState.getPacmanPosition()
         cur_pos = currentGameState.getPacmanPosition()
         newFood = successorGameState.getFood()
-        newGhostStates = successorGameState.getGhostStates()
         current_ghost_states = currentGameState.getGhostStates()
         current_scared_times = [ghostState.scaredTimer for ghostState in current_ghost_states]
-        #print 'SCARED: ', current_scared_times
-        newScaredTimes = [ghostState.scaredTimer for ghostState in newGhostStates]
-        score = successorGameState.getScore()
-        min_ghost_dist = min([util.manhattanDistance(newPos, g) for g in successorGameState.getGhostPositions()])
 
+        # base score
         score = successorGameState.getScore()
-        min_ghost_dist = min([util.manhattanDistance(newPos, g) for g in currentGameState.getGhostPositions()])
 
-        '''if  min_ghost_dist > 10:
-            ghost_proximity_scales = (10, -10)  # (unscared, scared)
-        elif min_ghost_dist > 5:
-            ghost_proximity_scales = (5, -50)   # (unscared, scared)
-        else:
-            ghost_proximity_scales = (1, -100)    # (unscared, scared)
-        ghost_vars = zip(currentGameState.getGhostPositions(), current_scared_times)
-        ghost_factors = [(util.manhattanDistance(newPos, g[0]) * (ghost_proximity_scales[1] if g[1] > 0 else ghost_proximity_scales[0])) for g in ghost_vars]
-        score += sum(ghost_factors)'''
-        # if min([util.manhattanDistance(newPos, g) for g in currentGameState.getGhostPositions()]) < 10:
+        # ghost factors: near is good if scared, bad otherwise
         ghost_vars = zip(currentGameState.getGhostPositions(), current_scared_times)
         ghost_proximity_scale = 2
+        for g in ghost_vars:
+            if g[1] > 5:
+                score += 100 / max(0.1, util.manhattanDistance(newPos, g[0]))
         ghost_factors = [(util.manhattanDistance(newPos, g[0]) * (ghost_proximity_scale * (-1 if g[1] > 0 else 1)))
                          for g in ghost_vars]
-        score += sum(ghost_factors)
+        score += 25 * math.log(max(1, sum(ghost_factors)), 2)
 
+        # discourage staying in same place
         if newPos == currentGameState.getPacmanPosition():
             score -= 10
 
+        # eating is good
         if newFood[newPos[0]][newPos[1]]:
             score += 20
-        else:
+        else:  # otherwise moving towards food is also good
             new_food_dists = [util.manhattanDistance(newPos, f) for f in newFood.asList()]
             if len(new_food_dists) == 0:
                 new_food_dists = [0]
             current_food_dists = [util.manhattanDistance(cur_pos, f) for f in newFood.asList()]
             if len(current_food_dists) == 0:
                 current_food_dists = [0]
+            score += random.randint(1, 15) * (min(current_food_dists) - min(new_food_dists))  # randomness to avoid getting stuck between comparable states
 
-            score += random.randint(1, 15) * (min(current_food_dists) - min(new_food_dists))
+        # eat capsule if near it anyways
+        if sum([g[1] for g in ghost_vars]) == 0:
+            capsule_vars = zip(currentGameState.getCapsules(), [util.manhattanDistance(cur_pos, c) for c in currentGameState.getCapsules()])
+            for c in capsule_vars:
+                if c[1] < 5:
+                    if util.manhattanDistance(newPos, c[0]) < util.manhattanDistance(cur_pos, c[0]):
+                        score += 50
 
         return score
+
 
 def scoreEvaluationFunction(currentGameState):
     """
       This default evaluation function just returns the score of the state.
       The score is the same one displayed in the Pacman GUI.
-
       This evaluation function is meant for use with adversarial search agents
       (not reflex agents).
     """
