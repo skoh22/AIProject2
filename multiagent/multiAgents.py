@@ -239,11 +239,11 @@ class AlphaBetaAgent(MultiAgentSearchAgent):
         return self.AlphaBetaSearch(gameState)
     def AlphaBetaSearch(self, gameState):
         nextActions=gameState.getLegalActions(0)
-        v = self.MaxValue(gameState,-999999,999999,0,0)
-        return action
+        v, actionIndex = self.MaxValue(gameState,-999999,999999,0,0)
+        return nextActions[actionIndex]
     def MaxValue(self, gameState, alpha, beta, currentDepth, currentAgent):
         if currentDepth>=self.depth or gameState.isWin() or gameState.isLose():
-            return self.evaluationFunction
+            return self.evaluationFunction(gameState)
         v = -999999
         nextActions = gameState.getLegalActions(currentAgent)
         if currentAgent >= gameState.getNumAgents() - 1:  # on the last ghost
@@ -257,18 +257,18 @@ class AlphaBetaAgent(MultiAgentSearchAgent):
             possibleV = self.MinValue(gameState.generateSuccessor(currentAgent,nextAction), alpha, beta, nextDepth, nextAgent)
             if possibleV > v:
                 v = possibleV
-                action = nextActions[i]
+                actionIndex = i
             if v > beta:
                 if currentDepth is 0:
-                    return v, action
+                    return v, actionIndex
                 return v
             alpha = max(alpha, v)
         if currentDepth is 0:
-            return v, action
+            return v, actionIndex
         return v
     def MinValue(self, gameState, alpha, beta, currentDepth, currentAgent):
         if currentDepth >= self.depth or gameState.isWin() or gameState.isLose():
-            return self.evaluationFunction
+            return self.evaluationFunction(gameState)
         v = 999999
         nextActions = gameState.getLegalActions(currentAgent)
         if currentAgent >= gameState.getNumAgents() - 1:  # on the last ghost
