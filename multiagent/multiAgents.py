@@ -374,6 +374,8 @@ def betterEvaluationFunction(currentGameState):
     ghost_vars = zip(ghost_positions, ghost_distances, scared_timers)
 
     capsule_vars = zip(currentGameState.getCapsules(), [util.manhattanDistance(pacman_position, c) for c in currentGameState.getCapsules()])
+    if len(capsule_vars) == 0:
+        capsule_vars = [(0, 0)]
 
     food_distances = [util.manhattanDistance(pacman_position, f) for f in currentGameState.getFood().asList()]
     if len(food_distances) == 0:
@@ -393,7 +395,7 @@ def betterEvaluationFunction(currentGameState):
     ret_val = 0
     ret_val += (1 * score)
     ret_val += (100 * (1 / sum([g[1] if g[2] > 0 else 0.00001 for g in ghost_vars])))
-    ret_val += (10 * (min([g[1] if g[2] == 0 else 0.00001 for g in ghost_vars])))
+    ret_val += (50 * (min([g[1] if g[2] == 0 else 0.00001 for g in ghost_vars])))
     ret_val += (-5000 * len(currentGameState.getFood().asList()))
     if min(food_distances) != 1:
         ret_val += (-50 * sum(food_distances)/len(food_distances))
