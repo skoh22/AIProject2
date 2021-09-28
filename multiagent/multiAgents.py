@@ -393,9 +393,9 @@ def betterEvaluationFunction(currentGameState):
                 continue
 
     ret_val = 0
-    ret_val += (1 * score)
+    ret_val += (1000 * score)
     ret_val += (100 * (1 / sum([g[1] if g[2] > 5 else 0.00001 for g in ghost_vars])))
-    ret_val += (50 * (min([g[1] if g[2] == 0 else 0.9 for g in ghost_vars])))
+    ret_val += (50 * (min([g[1] if g[2] == 0 else 0.1 for g in ghost_vars])))
     ret_val += (-5000 * len(currentGameState.getFood().asList()))
     if min(food_distances) != 1:
         ret_val += (-50 * sum(food_distances)/len(food_distances))
