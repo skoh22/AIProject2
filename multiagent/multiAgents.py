@@ -408,8 +408,6 @@ def betterEvaluationFunction(currentGameState):
     1. How much / how to port project 1 code to project 2
     
     '''
-    #ret_val += (50 * (1 / max(food_distances)))
-
     return ret_val
 
 
