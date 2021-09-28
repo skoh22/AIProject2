@@ -175,7 +175,6 @@ class MinimaxAgent(MultiAgentSearchAgent):
                 #print "bestAction = " + str(i)
         return bestAction
 
-
     def Minimax(self, gameState, currentDepth, currentAgent):
         if currentDepth >= self.depth or gameState.isWin() or gameState.isLose():
             return self.evaluationFunction(gameState)
@@ -290,7 +289,6 @@ class ExpectimaxAgent(MultiAgentSearchAgent):
     def getAction(self, gameState):
         """
           Returns the expectimax action using self.depth and self.evaluationFunction
-
           All ghosts should be modeled as choosing uniformly at random from their
           legal moves.
         """
@@ -347,7 +345,7 @@ class ExpectimaxAgent(MultiAgentSearchAgent):
                 values.append(self.Expectimax(gameState.generateSuccessor(currentAgent, nextAction),nextDepth, nextAgent))
             avg = 0
             for v in values:
-                avg += float(v)/len(values)
+                avg += float(v)/float(len(values))
             return avg
 
 def betterEvaluationFunction(currentGameState):
@@ -357,8 +355,51 @@ def betterEvaluationFunction(currentGameState):
 
       DESCRIPTION: <write something here so we know what you did>
     """
-    "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
+    score = currentGameState.getScore()
+    pacman_position = currentGameState.getPacmanPosition()
+
+    ghost_positions = currentGameState.getGhostPositions()
+    ghost_distances = [util.manhattanDistance(pacman_position, g) for g in ghost_positions]
+    scared_timers = [g.scaredTimer for g in currentGameState.getGhostStates()]
+    ghost_vars = zip(ghost_positions, ghost_distances, scared_timers)
+
+    capsule_vars = zip(currentGameState.getCapsules(), [util.manhattanDistance(pacman_position, c) for c in currentGameState.getCapsules()])
+    if len(capsule_vars) == 0:
+        capsule_vars = [(0, 0)]
+
+    food_distances = [util.manhattanDistance(pacman_position, f) for f in currentGameState.getFood().asList()]
+    if len(food_distances) == 0:
+        food_distances = [0.00001]
+
+    walls = currentGameState.getWalls()
+    wall_count = 0
+    for i in range(-1, 2):
+        for j in range(-1, 2):
+            try:
+                w = walls[pacman_position[0]+i][pacman_position[1]+j]
+                if w:
+                     wall_count += 1
+            except IndexError:
+                continue
+
+    ret_val = 0
+    ret_val += (1000 * score)
+    ret_val += (100 * (1 / sum([g[1] if g[2] > 5 else 0.00001 for g in ghost_vars])))
+    ret_val += (50 * (min([g[1] if g[2] == 0 else 0.1 for g in ghost_vars])))
+    ret_val += (-5000 * len(currentGameState.getFood().asList()))
+    if min(food_distances) != 1:
+        ret_val += (-50 * sum(food_distances)/len(food_distances))
+    ret_val += (-100000000 * len(currentGameState.getCapsules()))
+
+    # UCS of A* to nearest food instead of Manhattan distance
+    # stronger ghost weight
+    '''
+    OFFICE HOURS QUESTIONS:
+    1. How much / how to port project 1 code to project 2
+    
+    '''
+    return ret_val
+
 
 # Abbreviation
 better = betterEvaluationFunction
